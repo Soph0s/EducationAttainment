@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+  <meta charset="utf-8"/>
+
+  <title>Benton County</title>
+
+  <meta name='viewport' content='initial-scale=1,width=device-width,user-scalable=no' />
+
+
+  <!-- Load Leaflet from CDN-->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
+    integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet-src.js"
+    integrity="sha384-TWB9xRHTlLQmqAngHwD7usGcf4akGf0JP6aHwlgilpmOu2UuBq5aWLsDAh39iSn1"
+    crossorigin=""></script>
+
+
+  <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet@2.0.8"
+    integrity="sha384-ze7rgny7/YGFxBlVgTBdOABNWe5V9BYjju/qwqJhCU8XJHtuEnRlbUpN5lXyY706"
+    crossorigin=""></script>
+
+    <!-- load the latest release from the cdn automatically -->
+<script src="https://unpkg.com/esri-leaflet-vector"></script>
+
+
+  <style>
+    body { margin:0; padding:0; }
+
+
+    @font-face { font-family: "AvenirNextLTW01-Regular"; src: url("https://4p4d3b.media.zestyio.com/e9167238-3b3f-4813-a04a-a384394eed42.eot?#iefix") format("eot"), url("https://4p4d3b.media.zestyio.com/1e9892c0-6927-4412-9874-1b82801ba47a.woff") format("woff"), url("https://4p4d3b.media.zestyio.com/46cf1067-688d-4aab-b0f7-bd942af6efd8.ttf") format("truetype"), url("https://4p4d3b.media.zestyio.com/52a192b1-bea5-4b48-879f-107f009b666f.svg#52a192b1-bea5-4b48-879f-107f009b666f") format("svg"); }
+
+    #basemaps {
+    margin-bottom: 5px;
+  }
+
+    #map { position: absolute; top:0; bottom:0; right:0; left:0; font-family:AvenirNextLTW01-Regular;  }
+
+    #info-pane {
+    position: absolute;
+    opacity: .8;
+    right: 10px;
+    z-index: 400;
+    padding: 1em;
+    background-color: white;
+    border: 1px solid #71CB3D;
+    font-family:AvenirNextLTW01-Regular;
+  
+
+
+  }
+
+   #basemaps-wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 400;
+    background: white;
+    padding: 10px;
+}
+    .leaflet-popup-content-wrapper{
+    opacity: 1;
+    top: 10px;
+    right: 10px;
+    z-index: 400;
+    padding-bottom: 1px;
+    margin-bottom: 5em;
+    background-color: white;
+    border-top: .2em solid #71CB3D;
+}
+
+h1 {
+	font-family: AvenirNextLTW01-Regular;
+	font-size: 23px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 23px;
+}
+h3 {
+	font-family:AvenirNextLTW01-Regular;
+	font-size: 17px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 23px;
+}
+p {
+	font-family:AvenirNextLTW01-Regular;
+	font-size: 14px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 23px;
+}
+blockquote {
+	font-family: AvenirNextLTW01-Regular;
+	font-size: 17px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 23px;
+}
+pre {
+	font-family: AvenirNextLTW01-Regular;
+	font-size: 11px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 23px;
+}
+
+legend {
+	font-family: AvenirNextLTW01-Regular;
+	font-size: 10.25px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 23px;
+
+}
+
+.legend span, .legend label {
+  display: block;
+  width: 40px;
+  height: 18px;
+  float: left;
+  opacity: 0.7;
+  text-align: center;
+  font-size: 80%
+}
+.legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+
+
+
+
+  </style>
+</head>
+<body>
+<section>
+<div id="map"></div>
+<div id="info-pane" class="leaflet-bar" style="position: fixed; margin-top: 40px"></div>
+
+<div id="panel" class="leaflet-bar" style="position: fixed; margin-top: 80px; z-index: 600; background-color: white; border: 5px, solid green; padding: 5px; display: none; ">
+ Area of Interest
+  <select name="relation" id="relationSelect">
+    <option value="within">Within</option>
+    <option value="contains">Contains</option>
+    <option value="intersects">Intersects</option>
+    <option value="overlaps">Overlaps</option>
+  </select>
+  <select name="geometry" id="geometrySelect">
+    <option value="polygon">Polygon</option>
+  </select>
+</div>
+</section>
+<script>
+
+
+
+    var map = L.map("map", {
+    minZoom: 9.,
+    maxZoom:11,
+    zoom: 9.,
+    zoomsnap: .75,
+     center:[40.349842, -74.513566]
+
+  }).setMaxBounds([[40.589100, -76.733304],[40.752630, -72.376736],
+  [42.310478, -74.884610],[38.953085, -74.896969]]); 
+ //Create a pane to hold labels on top of the featurelayer 
+
+map.createPane('labels');
+
+//Set the Z index to be above the featurelayer but under the popup
+
+map.getPane('labels').style.zIndex = 600;
+
+//Add the layer for the labels
+
+var positronLabels = L.tileLayer('https://api.mapbox.com/styles/v1/sophos/cj5y3zjba0v2t2sqw7peoayjl/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic29waG9zIiwiYSI6ImNqNWI3Z3UxaTBoaXcyd3J5MTlmaTNlbXMifQ.kZE24axRxUXN6AUTAxqMfA',{
+        pane: 'labels'
+}).addTo(map);
+
+
+
+  var baselayer = L.tileLayer("https://api.mapbox.com/styles/v1/sophos/cj5vag9rb687a2rocqn51gkil/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic29waG9zIiwiYSI6ImNqNWI3Z3UxaTBoaXcyd3J5MTlmaTNlbXMifQ.kZE24axRxUXN6AUTAxqMfA").addTo(map);
+
+
+//color function for layers
+
+function getColor(d) {
+    return d > 37 ? '#bd0026' :
+           d > 28 ? '#f03b20' :
+           d > 21  ? '#fd8d3c' :
+           d > 13? '#fecc5c' :
+           d >  7 ? '#ffffb2' :
+                      '#ffffe5';
+}
+
+//Loan percentage layer
+
+var percentDropouts = L.esri.featureLayer({
+	url: "https://services2.arcgis.com/j80Jz20at6Bi0thr/ArcGIS/rest/services/CountyDropouts/FeatureServer/0",
+	style: function (feature) {
+    return {
+        fillColor: getColor(feature.properties.Percent_Dropouts),
+        weight: 1,
+        opacity: 1,
+        color: "#5f2e43",
+        dashArray: '3',
+        fillOpacity: 0.65,
+        font: "AvenirNextLTW01-Regular",
+    };
+}
+}).addTo(map)
+
+
+var noData = L.esri.featureLayer({
+  url: "https://services2.arcgis.com/j80Jz20at6Bi0thr/arcgis/rest/services/CountiesNoData/FeatureServer/0",
+  style: function (feature) {
+    return {
+        fillColor: getColor(feature.properties.Percent_Dropouts),
+        weight: 1,
+        opacity: 1,
+        color: "#5f2e43",
+        dashArray: '3',
+        fillOpacity: 0.65,
+        font: "AvenirNextLTW01-Regular",
+    };
+}
+}).addTo(map)
+
+
+var percentSmokers = L.esri.featureLayer({
+	url: "https://services2.arcgis.com/j80Jz20at6Bi0thr/ArcGIS/rest/services/CountyDropouts/FeatureServer/0",
+	style: function (feature) {
+    return {
+        fillColor: getColor(feature.properties.Percent_Smokers),
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        font: "AvenirNextLTW01-Regular",
+    };
+}
+})
+
+var percentDrinking = L.esri.featureLayer({
+	url: "https://services2.arcgis.com/j80Jz20at6Bi0thr/ArcGIS/rest/services/CountyDropouts/FeatureServer/0",
+	style: function (feature) {
+    return {
+        fillColor: getColor(feature.properties.Percent_Excessive_Drinking),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        font: "AvenirNextLTW01-Regular",
+    };
+}
+})
+
+var percentPoorHealth = L.esri.featureLayer({
+	url: "https://services2.arcgis.com/j80Jz20at6Bi0thr/ArcGIS/rest/services/CountyDropouts/FeatureServer/0",
+	style: function (feature) {
+    return {
+        fillColor: getColor(feature.properties.Percent_Fair_Poor_Health),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        font: "AvenirNextLTW01-Regular",
+
+    };
+}
+})
+
+
+//Puts all of the layers in a single variable and gives them a description
+
+var studentLoansOverlay = {
+	"Percent of Highschool Dropouts" : percentDropouts,
+	"Percent of Smokers" : percentSmokers,
+	"Percent of Excessive Drinking" : percentDrinking,
+	"Percent with Poor Health" : percentPoorHealth
+	
+};
+
+
+
+
+//creates a popup with bound info on
+
+
+percentDropouts.bindPopup (function (dataLayer){
+  return L.Util.template('<section><div style="font-size:20px; color: white; font-family: AvenirNextLTW01-Regular; background-color: #71CB3D; margin-top: -1.5em; margin-left: 2.75em; margin-right:2.75em "> <p><center><b>{County}, {State}</b></center></div> <center><div style="color: black; font-family: AvenirNextLTW01-Regular;"> <br> Percent of Highschool Dropouts:  {Percent_Dropouts}<br>Percent of Smokers:  {Percent_Smokers} <br> Percent of Excessive Drinkers:  {Percent_Excessive_Drinking}<br> Percent with Poor Health:  {Percent_Fair_Poor_Health } </div></center></section>', dataLayer.feature.properties);
+});
+
+noData.bindPopup (function (dataLayer){
+  return L.Util.template('<section><div style="font-size:20px; color: white; font-family: AvenirNextLTW01-Regular; background-color: #71CB3D; margin-top: -1.5em; margin-left: 2.75em; margin-right:2.75em "> <p><center><b>{NAME}, {STATE_NAME}</b></center></div> <center><div style="color: black; font-family: AvenirNextLTW01-Regular;"> <br> Sorry No Data </div></center></section>', dataLayer.feature.properties);
+});
+
+
+
+
+ var oldId;
+
+//bind infobar to show 'Click to inspect' on page load
+percentDropouts.on('load', function(e){
+    document.getElementById('info-pane').innerHTML = 'Click to Inspect';
+    percentDropouts.resetFeatureStyle(oldId);
+  });
+
+// Binds infobar to mouse out 
+  percentDropouts.on('mouseout', function(e){
+    document.getElementById('info-pane').innerHTML = 'Click to Inspect';
+    percentDropouts.resetFeatureStyle(oldId);
+  });
+
+
+//Binds a infobar basic information on mouseover
+  percentDropouts.on('mouseover', function(e){
+    oldId = e.layer.feature.id;
+    document.getElementById('info-pane').innerHTML = e.layer.feature.properties.County +"," + ' ' + e.layer.feature.properties.State;
+    percentDropouts.setFeatureStyle(e.layer.feature.id, {
+      color: '#ffff00',
+      weight: 2,
+      opacity: 1
+    });
+  });
+
+
+var polygon = L.polygon([
+    [40.834512, -74.897682],
+    [40.602656, -75.256772],
+    [40.273412, -74.917569],
+    [40.577628, -74.489102],
+    [40.834512, -74.897682],
+  ], {
+    color: 'white',
+    weight: 2,
+    opacity: 0,
+  });
+
+
+
+  var labels = {};
+
+  percentDropouts.on('createfeature', function(e){
+    var id = e.feature.id;
+    var feature = percentDropouts.getFeature(id);
+    var center = feature.getBounds().getCenter();
+    var label = L.marker(center, {
+      icon: L.divIcon({
+        iconSize: null,
+        className: 'label',
+        html: '<div style= "right: 20px; top: 5px; position: relative; font-family:AvenirNextLTW01-Regular; font-size:12.5px; font-weight: 400; color: #4D4D4D ; ">' + e.feature.properties.County + " County"+'</div>'
+      })
+    }).addTo(map);
+    labels[id] = label;
+  });
+
+  percentDropouts.on('addfeature', function(e){
+    var label = labels[e.feature.id];
+    if(label){
+      label.addTo(map);
+    }
+  });
+
+  percentDropouts.on('removefeature', function(e){
+    var label = labels[e.feature.id];
+    if(label){
+      map.removeLayer(label);
+    }
+  });
+
+
+//make labels for the counties with no data
+
+   noData.on('createfeature', function(e){
+    var id = e.feature.id;
+    var feature = noData.getFeature(id);
+    var center = feature.getBounds().getCenter();
+    var label = L.marker(center, {
+      icon: L.divIcon({
+        iconSize: null,
+        className: 'label',
+        html: '<div style= "right: 20px; top: 5px; position: relative; font-family:AvenirNextLTW01-Regular; font-size:12.5px; font-weight: 400; color: #4D4D4D ; ">' + e.feature.properties.NAME + " County"+'</div>'
+      })
+    }).addTo(map);
+    labels[id] = label;
+  });
+
+  noData.on('addfeature', function(e){
+    var label = labels[e.feature.id];
+    if(label){
+      label.addTo(map);
+    }
+  });
+
+ noData.on('removefeature', function(e){
+    var label = labels[e.feature.id];
+    if(label){
+      map.removeLayer(label);
+    }
+  });
+
+
+  // collect geometries into an object so we can reference them later
+  var geometries = {
+    polygon: polygon,
+  };
+
+  // get references to our <select> elements
+  var relationship = document.getElementById('relationSelect');
+  var geometry = document.getElementById('geometrySelect');
+
+  var previousIds = [];
+
+  // reset all features back to their regularly defined styles
+  function reset(){
+    for (var i = previousIds.length - 1; i >= 0; i--) {
+      percentDropouts.resetStyle(previousIds[i]);
+    };
+  }
+
+  // query the API and highlight features
+  function query(){
+    reset();
+
+    // lookup our input geometry
+    var inputGeometry = geometries[geometry.value];
+
+    // query the service executing the selected relation with the selected input geometry
+    percentDropouts.query()[relationship.value](inputGeometry).ids(function(error, ids){
+      previousIds = ids;
+      for (var i = ids.length - 1; i >= 0; i--) {
+        percentDropouts.setFeatureStyle(ids[i], { 
+        	color: "#5f2e43", 
+        	weight: 2 ,
+        	fillColor: "#cb5bff",
+        	fillOpacity: .5
+        });
+
+      };
+    });
+  } 
+
+  // query when an input changes
+  geometry.addEventListener('change', query);
+  relationship.addEventListener('change', query);
+
+  // once all percentDropouts have loaded run the default query
+  percentDropouts.once('load', function(){
+    query();
+  });
+//creating a legend for the map
+
+var legend = L.control({position: 'bottomright'});
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 7, 13, 21, 28, 37],
+        labels = [];
+
+
+    // loop through our density intervals and generate a label with a colored square for each interval
+    // first loop for colored legend boxes
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<span style="background:' + getColor(grades[i] + 1) + '"></span>';
+    }
+    // the title
+     div.innerHTML = '<legend>Percent of Highschool Dropouts</legend>' + div.innerHTML 
+
+
+
+    // a line break
+    div.innerHTML += '<br>';
+
+    // second loop for text
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<label>' +  grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] :'+') + '</label>';
+    }
+    return div;
+
+    
+};
+
+legend.addTo(map);
+
+
+</script>
+
+</body>
+</html>
